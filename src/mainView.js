@@ -1,8 +1,6 @@
-import { LitElement, html, css } from 'lit';
-
-// Importa los estilos de Bootstrap en el archivo principal de tu proyecto
+import { LitElement, html } from 'lit';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-import '../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'; // Importa JS de Bootstrap 5
+import '../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js';
 
 
 export class MainView extends LitElement {
@@ -11,10 +9,21 @@ export class MainView extends LitElement {
   }
 
   static properties = {
-    data: { type: Object },
-    error: { type: String },
-    formData: { type: Object },
-    responseMessage: { type: String },
+    data: {
+      type: Object
+    },
+    error: {
+      type: String
+    },
+    formData: {
+      type: Object
+    },
+    responseMessage: {
+      type: String
+    },
+    modalVisible: {
+      type: Boolean
+    },
   };
 
   constructor() {
@@ -29,6 +38,8 @@ export class MainView extends LitElement {
       persona: '',
     };
     this.responseMessage = '';
+    this.modalVisible = false;
+
   }
 
   connectedCallback() {
@@ -66,6 +77,8 @@ export class MainView extends LitElement {
 
       const result = await response.json();
       this.responseMessage = `Solicitud exitosa: ${result.message}`;
+      this._closeModal();
+      this._fetchData();
     } catch (error) {
       this.responseMessage = `Error: ${error.message}`;
     }
@@ -116,17 +129,28 @@ export class MainView extends LitElement {
     `;
   }
 
+  _openModal() {
+    this.modalVisible = true;
+    const modal = new bootstrap.Modal(this.renderRoot.querySelector('#exampleModal'));
+    modal.show();
+  }
+
+  _closeModal() {
+    const modal = bootstrap.Modal.getInstance(this.renderRoot.querySelector('#exampleModal'));
+    modal.hide();
+  }
+
   get tplButtonModal() {
     return html`
     <div class="d-flex justify-content-center mb-3">
-      <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">CREAR</button>
+      <button class="btn btn-info" @click="${this._openModal}">CREAR</button>
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" aria-label="Close" @click="${this._closeModal}"></button>
           </div>
           <form @submit="${(e) => e.preventDefault()}">
             <div class="modal-body">
@@ -192,7 +216,7 @@ export class MainView extends LitElement {
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-secondary" @click="${this._closeModal}">Cerrar</button>
               <button type="button" class="btn btn-primary" @click="${this._sendPostRequest}">Guardar</button>
             </div>
           </form>
