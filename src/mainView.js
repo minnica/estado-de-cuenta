@@ -106,6 +106,24 @@ export class MainView extends LitElement {
     }
   }
 
+  async _deleteRecord(id) {
+    try {
+      const response = await fetch(`http://localhost:8000/estadoCuenta/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el registro');
+      }
+
+      const result = await response.json();
+      this.responseMessage = `Registro eliminado: ${result.message}`;
+      this._getRecords(); // Refresca los datos después de eliminar
+    } catch (error) {
+      this.responseMessage = `Error: ${error.message}`;
+    }
+  }
+
   _handleInputChange(e) {
     const { name, value, type } = e.target;
     this.formData = {
@@ -144,7 +162,7 @@ export class MainView extends LitElement {
                 <td>${item.pago}</td>
                 <td>${item.pago_restante}</td>
                 <td>${item.persona}</td>
-                <td><button class="btn btn-primary">Editar</button><button class="btn btn-danger">Borrar</button></td>
+                <td><button class="btn btn-danger" @click="${() => this._deleteRecord(item.id)}">Borrar</button></td>
               </tr>
             `
             )}
