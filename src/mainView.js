@@ -24,6 +24,8 @@ export class MainView extends LitElement {
     modalVisible: {
       type: Boolean
     },
+    currentPage: { type: Number },
+    rowsPerPage: { type: Number },
   };
 
   constructor() {
@@ -39,15 +41,35 @@ export class MainView extends LitElement {
     };
     this.responseMessage = '';
     this.modalVisible = false;
+    this.currentPage = 1;
+    this.rowsPerPage = 10;
+  }
 
+  _changePage(pageNumber) {
+    this.currentPage = pageNumber;
+  }
+
+  get _paginatedData() {
+    const start = (this.currentPage - 1) * this.rowsPerPage;
+    const end = start + this.rowsPerPage;
+    return this.data.slice(start, end);  // Retornar solo las filas visibles
+  }
+
+  get _paginationButtons() {
+    const totalPages = Math.ceil(this.data.length / this.rowsPerPage);
+    let buttons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      buttons.push(html`<button class="btn btn-secondary mx-1" @click="${() => this._changePage(i)}">${i}</button>`);
+    }
+    return buttons;
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._fetchData();
+    this._getRecords();
   }
 
-  async _fetchData() {
+  async _getRecords() {
     try {
       const response = await fetch('http://localhost:8000/estadoCuenta');
       if (!response.ok) {
@@ -55,14 +77,14 @@ export class MainView extends LitElement {
       }
       const result = await response.json();
       this.data = result;
+      console.log("🚀 ~ MainView ~ _getRecords ~ this.data:", this.data)
     } catch (error) {
       this.error = error.message;
     }
   }
 
-  async _sendPostRequest() {
+  async _postRecord() {
     try {
-      console.log("🚀 ~ MainView ~ _sendPostRequest ~ JSON.stringify(this.formData):", JSON.stringify(this.formData))
       const response = await fetch('http://localhost:8000/estadoCuenta', {
         method: 'POST',
         headers: {
@@ -78,7 +100,7 @@ export class MainView extends LitElement {
       const result = await response.json();
       this.responseMessage = `Solicitud exitosa: ${result.message}`;
       this._closeModal();
-      this._fetchData();
+      this._getRecords();
     } catch (error) {
       this.responseMessage = `Error: ${error.message}`;
     }
@@ -96,6 +118,7 @@ export class MainView extends LitElement {
     return html`
       <table class="table table-bordered">
         <thead class="table-dark">
+          <th>ID</th>
           <th>CATEGORIA</th>
           <th>MOVIMIENTOS</th>
           <th>MONTO</th>
@@ -108,9 +131,10 @@ export class MainView extends LitElement {
           <th>ACCIONES</th>
         </thead>
         <tbody>
-          ${this.data.map(
+          ${this._paginatedData.map(
             (item) => html`
               <tr>
+                <td>${item.id}</td>
                 <td>${item.categoria}</td>
                 <td>${item.movimiento}</td>
                 <td>${item.monto}</td>
@@ -123,9 +147,12 @@ export class MainView extends LitElement {
                 <td><button class="btn btn-primary">Editar</button><button class="btn btn-danger">Borrar</button></td>
               </tr>
             `
-          )}
+            )}
         </tbody>
       </table>
+      <div class="d-flex justify-content-center mt-3">
+        ${this._paginationButtons}
+      </div>
     `;
   }
 
@@ -140,7 +167,7 @@ export class MainView extends LitElement {
     modal.hide();
   }
 
-  get tplButtonModal() {
+  get _tplButtonModal() {
     return html`
     <div class="d-flex justify-content-center mb-3">
       <button class="btn btn-info" @click="${this._openModal}">CREAR</button>
@@ -217,7 +244,7 @@ export class MainView extends LitElement {
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="${this._closeModal}">Cerrar</button>
-              <button type="button" class="btn btn-primary" @click="${this._sendPostRequest}">Guardar</button>
+              <button type="button" class="btn btn-primary" @click="${this._postRecord}">Guardar</button>
             </div>
           </form>
         </div>
@@ -229,7 +256,7 @@ export class MainView extends LitElement {
   render() {
     return html`
       <div class="container mt-3">
-        ${this.tplButtonModal}
+        ${this._tplButtonModal}
         ${this._tplTable}
       </div>
     `;
