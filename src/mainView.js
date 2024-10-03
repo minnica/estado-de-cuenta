@@ -24,8 +24,15 @@ export class MainView extends LitElement {
     modalVisible: {
       type: Boolean
     },
-    currentPage: { type: Number },
-    rowsPerPage: { type: Number },
+    currentPage: {
+      type: Number
+    },
+    rowsPerPage: {
+      type: Number
+    },
+    editingId: {
+      type: Number
+    },
   };
 
   constructor() {
@@ -35,14 +42,15 @@ export class MainView extends LitElement {
     this.formData = {
       categoria: '',
       movimiento: '',
-      monto: 0,
-      msi: 1,
+      monto: null,
+      msi: null,
       persona: '',
     };
     this.responseMessage = '';
     this.modalVisible = false;
     this.currentPage = 1;
     this.rowsPerPage = 10;
+    this.editingId = null;
   }
 
   _changePage(pageNumber) {
@@ -52,7 +60,7 @@ export class MainView extends LitElement {
   get _paginatedData() {
     const start = (this.currentPage - 1) * this.rowsPerPage;
     const end = start + this.rowsPerPage;
-    return this.data.slice(start, end);  // Retornar solo las filas visibles
+    return this.data.slice(start, end);
   }
 
   get _paginationButtons() {
@@ -77,16 +85,42 @@ export class MainView extends LitElement {
       }
       const result = await response.json();
       this.data = result;
-      console.log("🚀 ~ MainView ~ _getRecords ~ this.data:", this.data)
     } catch (error) {
       this.error = error.message;
     }
   }
 
-  async _postRecord() {
+  async _editRecord(id) {
     try {
-      const response = await fetch('http://localhost:8000/estadoCuenta', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:8000/estadoCuenta/${id}`);
+      if (!response.ok) {
+        throw new Error('Error al obtener los datos del registro');
+      }
+      const record = await response.json();
+      this.formData = {
+        categoria: record.categoria,
+        movimiento: record.movimiento,
+        monto: record.monto,
+        msi: record.msi,
+        persona: record.persona,
+      };
+      this.editingId = id;
+      this._openModal();
+    } catch (error) {
+      console.error('Error al editar el registro:', error.message);
+    }
+  }
+
+  async _saveRecord() {
+    try {
+      let url = 'http://localhost:8000/estadoCuenta';
+      let method = 'POST';
+      if (this.editingId !== null) {
+        url = `http://localhost:8000/estadoCuenta/${this.editingId}`;
+        method = 'PUT';
+      }
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -101,6 +135,7 @@ export class MainView extends LitElement {
       this.responseMessage = `Solicitud exitosa: ${result.message}`;
       this._closeModal();
       this._getRecords();
+      this.editingId = null;
     } catch (error) {
       this.responseMessage = `Error: ${error.message}`;
     }
@@ -118,7 +153,7 @@ export class MainView extends LitElement {
 
       const result = await response.json();
       this.responseMessage = `Registro eliminado: ${result.message}`;
-      this._getRecords(); // Refresca los datos después de eliminar
+      this._getRecords();
     } catch (error) {
       this.responseMessage = `Error: ${error.message}`;
     }
@@ -162,7 +197,12 @@ export class MainView extends LitElement {
                 <td>${item.pago}</td>
                 <td>${item.pago_restante}</td>
                 <td>${item.persona}</td>
-                <td><button class="btn btn-danger" @click="${() => this._deleteRecord(item.id)}">Borrar</button></td>
+                <td>
+                  <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                    <button type="button" class="btn btn-primary btn-sm" @click="${() => this._editRecord(item.id)}">Editar</button>
+                    <button type="button" class="btn btn-danger btn-sm" @click="${() => this._deleteRecord(item.id)}">Borrar</button>
+                  </div>
+                </td>
               </tr>
             `
             )}
@@ -183,12 +223,32 @@ export class MainView extends LitElement {
   _closeModal() {
     const modal = bootstrap.Modal.getInstance(this.renderRoot.querySelector('#exampleModal'));
     modal.hide();
+    this.formData = {
+      categoria: '',
+      movimiento: '',
+      monto: null,
+      msi: null,
+      persona: '',
+    };
+    this.editingId = null;
+  }
+
+  _createRecord() {
+    this.formData = {
+      categoria: '',
+      movimiento: '',
+      monto: null,
+      msi: null,
+      persona: '',
+    };
+    this.editingId = null;
+    this._openModal()
   }
 
   get _tplButtonModal() {
     return html`
     <div class="d-flex justify-content-center mb-3">
-      <button class="btn btn-info" @click="${this._openModal}">CREAR</button>
+      <button class="btn btn-info" @click="${this._createRecord}">CREAR</button>
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -262,7 +322,7 @@ export class MainView extends LitElement {
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="${this._closeModal}">Cerrar</button>
-              <button type="button" class="btn btn-primary" @click="${this._postRecord}">Guardar</button>
+              <button type="button" class="btn btn-primary" @click="${this._saveRecord}">Guardar</button>
             </div>
           </form>
         </div>
