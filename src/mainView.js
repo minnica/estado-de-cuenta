@@ -45,6 +45,10 @@ export class MainView extends LitElement {
       monto: null,
       msi: null,
       persona: '',
+      parcialidad: null,
+      mes_restante: null,
+      pago: null,
+      pago_restante: null
     };
     this.responseMessage = '';
     this.modalVisible = false;
@@ -103,6 +107,10 @@ export class MainView extends LitElement {
         monto: record.monto,
         msi: record.msi,
         persona: record.persona,
+        parcialidad: record.parcialidad,
+        mes_restante: record.mes_restante,
+        pago: record.pago,
+        pago_restante: record.pago_restante
       };
       this.editingId = id;
       this._openModal();
@@ -167,6 +175,16 @@ export class MainView extends LitElement {
     };
   }
 
+  _onChangeValue(e){
+    const { value } = e.target
+    if (value !== 1) {
+      this.formData.mes_restante = this.formData.msi - value
+      this.formData.pago = (this.formData.monto/this.formData.msi).toFixed(2)
+      this.formData.pago_restante = ((this.formData.monto/this.formData.msi) * this.formData.mes_restante).toFixed(2)
+    }
+    this.requestUpdate();
+  }
+
   get _tplTable() {
     return html`
       <table class="table table-bordered">
@@ -229,6 +247,10 @@ export class MainView extends LitElement {
       monto: null,
       msi: null,
       persona: '',
+      parcialidad: null,
+      mes_restante: null,
+      pago: null,
+      pago_restante: null
     };
     this.editingId = null;
   }
@@ -240,6 +262,10 @@ export class MainView extends LitElement {
       monto: null,
       msi: null,
       persona: '',
+      parcialidad: null,
+      mes_restante: null,
+      pago: null,
+      pago_restante: null
     };
     this.editingId = null;
     this._openModal()
@@ -271,6 +297,16 @@ export class MainView extends LitElement {
                   <option value="" disabled selected>Seleccionar</option>
                   <option value="Entretenimiento">Entretenimiento</option>
                   <option value="Comida">Comida</option>
+                  <option value="Chatarra">Chatarra</option>
+                  <option value="Mobiliario">Mobiliario</option>
+                  <option value="Electrónica">Electrónica</option>
+                  <option value="Electrodomésticos">Electrodomésticos</option>
+                  <option value="Ropa">Ropa</option>
+                  <option value="Herramientas">Herramientas</option>
+                  <option value="Hogar">Hogar</option>
+                  <option value="Oficina">Oficina</option>
+                  <option value="Accesorio">Accesorio</option>
+                  <option value="Otros">Otros</option>
                 </select>
 
                 </div>
@@ -279,7 +315,7 @@ export class MainView extends LitElement {
                     type="text"
                     class="form-control"
                     name="movimiento"
-                    placeholder="Movimiento"
+                    placeholder="MOVIMIENTO"
                     .value="${this.formData.movimiento}"
                     @input="${this._handleInputChange}"
                   >
@@ -291,7 +327,7 @@ export class MainView extends LitElement {
                     type="number"
                     class="form-control"
                     name="monto"
-                    placeholder="Monto"
+                    placeholder="MONTO"
                     .value="${String(this.formData.monto)}"
                     @input="${this._handleInputChange}"
                   >
@@ -310,10 +346,57 @@ export class MainView extends LitElement {
               <div class="row">
                 <div class="col-sm-6 mb-3">
                   <input
+                    type="number"
+                    class="form-control"
+                    name="parcialidad"
+                    placeholder="PARCIALIDAD"
+                    .value="${String(this.formData.parcialidad)}"
+                    @input="${(e) => { this._onChangeValue(e); this._handleInputChange(e); }}"
+                  >
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <input
+                    type="number"
+                    class="form-control"
+                    name="mes_restante"
+                    placeholder="MES RESTANTE"
+                    .value="${String(this.formData.mes_restante)}"
+                    @input="${this._handleInputChange}"
+                    disabled
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-6 mb-3">
+                  <input
+                    type="number"
+                    class="form-control"
+                    name="pago"
+                    placeholder="PAGO"
+                    .value="${String(this.formData.pago)}"
+                    @input="${this._handleInputChange}"
+                    disabled
+                  >
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <input
+                    type="number"
+                    class="form-control"
+                    name="pago_restante"
+                    placeholder="PAGO RESTANTE"
+                    .value="${String(this.formData.pago_restante)}"
+                    @input="${this._handleInputChange}"
+                    disabled
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12 mb-3">
+                  <input
                     type="text"
                     class="form-control"
                     name="persona"
-                    placeholder="Persona"
+                    placeholder="PERSONA"
                     .value="${this.formData.persona}"
                     @input="${this._handleInputChange}"
                   >
