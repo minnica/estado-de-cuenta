@@ -83,7 +83,7 @@ export class MainView extends LitElement {
 
   async _getRecords() {
     try {
-      const response = await fetch('http://localhost:8000/estadoCuenta');
+      const response = await fetch('http://localhost:8000/personalFinance');
       if (!response.ok) {
         throw new Error('Error en la respuesta de la API');
       }
@@ -96,7 +96,7 @@ export class MainView extends LitElement {
 
   async _editRecord(id) {
     try {
-      const response = await fetch(`http://localhost:8000/estadoCuenta/${id}`);
+      const response = await fetch(`http://localhost:8000/personalFinance/${id}`);
       if (!response.ok) {
         throw new Error('Error al obtener los datos del registro');
       }
@@ -121,10 +121,10 @@ export class MainView extends LitElement {
 
   async _saveRecord() {
     try {
-      let url = 'http://localhost:8000/estadoCuenta';
+      let url = 'http://localhost:8000/personalFinance';
       let method = 'POST';
       if (this.editingId !== null) {
-        url = `http://localhost:8000/estadoCuenta/${this.editingId}`;
+        url = `http://localhost:8000/personalFinance/${this.editingId}`;
         method = 'PUT';
       }
       const response = await fetch(url, {
@@ -151,7 +151,7 @@ export class MainView extends LitElement {
 
   async _deleteRecord(id) {
     try {
-      const response = await fetch(`http://localhost:8000/estadoCuenta/${id}`, {
+      const response = await fetch(`http://localhost:8000/personalFinance/${id}`, {
         method: 'DELETE',
       });
 
@@ -190,6 +190,8 @@ export class MainView extends LitElement {
       <table class="table table-bordered">
         <thead class="table-dark">
           <th>ID</th>
+          <th>BANCO</th>
+          <th>PERSONA</th>
           <th>CATEGORIA</th>
           <th>MOVIMIENTOS</th>
           <th>MONTO</th>
@@ -198,23 +200,25 @@ export class MainView extends LitElement {
           <th>MES RESTANTE</th>
           <th>PAGO</th>
           <th>PAGO RESTANTE</th>
-          <th>PERSONA</th>
+          <th>PAGADO</th>
           <th>ACCIONES</th>
         </thead>
         <tbody>
           ${this._paginatedData.map(
             (item) => html`
               <tr>
-                <td>${item.id}</td>
-                <td>${item.categoria}</td>
-                <td>${item.movimiento}</td>
-                <td>${item.monto}</td>
-                <td>${item.msi}</td>
-                <td>${item.parcialidad}</td>
-                <td>${item.mes_restante}</td>
-                <td>${item.pago}</td>
-                <td>${item.pago_restante}</td>
-                <td>${item.persona}</td>
+                <td>${item.id_daily_purchases}</td>
+                <td>${item.payment_type.payment_type_name}</td>
+                <td>${item.person.person_name}</td>
+                <td>${item.id_category}</td>
+                <td>${item.transactions}</td>
+                <td>${item.amount}</td>
+                <td>${item.no_interest_months}</td>
+                <td>${item.current_month}</td>
+                <td>${item.remaining_month}</td>
+                <td>${item.payment}</td>
+                <td>${item.remaining_payment}</td>
+                <td>${item.paid}</td>
                 <td>
                   <div class="btn-group" role="group" aria-label="Basic mixed styles example">
                     <button type="button" class="btn btn-primary btn-sm" @click="${() => this._editRecord(item.id)}">Editar</button>
